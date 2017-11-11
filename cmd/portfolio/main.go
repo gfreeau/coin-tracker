@@ -42,7 +42,7 @@ func main() {
 		priceCAD := numberOfCoins * coin.PriceCAD
 		priceUSD := numberOfCoins * coin.PriceUSD
 
-		output += fmt.Sprintf("%s: CAD %6.2f, USD %6.2f\n", coin.Symbol, priceCAD, priceUSD)
+		output += fmt.Sprintf("%s: CAD %.4f, USD %.4f\n", coin.Symbol, priceCAD, priceUSD)
 
 		totalUSD += priceUSD
 		totalCAD += priceCAD
@@ -53,8 +53,8 @@ func main() {
 	}
 
 	fmt.Print("Totals:\n")
-	fmt.Printf("CAD: %6.2f\n", totalCAD)
-	fmt.Printf("USD: %6.2f\n", totalUSD)
+	fmt.Printf("CAD: %.4f\n", totalCAD)
+	fmt.Printf("USD: %.4f\n", totalUSD)
 	fmt.Print("\nCoins:\n")
 	fmt.Print(output)
 }

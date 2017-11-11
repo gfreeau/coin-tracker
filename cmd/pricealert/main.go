@@ -76,7 +76,7 @@ func main() {
 		}
 
 		if coin.PriceCAD > alertPrice {
-			output += fmt.Sprintf("%s is now CAD %6.2f\n", coin.Name, coin.PriceCAD)
+			output += fmt.Sprintf("%s is now CAD %.4f, USD %.4f\n", coin.Name, coin.PriceCAD, coin.PriceUSD)
 			alert = true
 			priceHistory[coin.Symbol] = coin.PriceCAD + (coin.PriceCAD * conf.IncreasePercent)
 		}
