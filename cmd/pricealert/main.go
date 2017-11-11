@@ -35,7 +35,7 @@ func main() {
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 
 	if err != nil {
-		panic(err.Error())
+		cointracker.LogFatal(err.Error())
 	}
 
 	var priceHistory PriceHistory
@@ -47,11 +47,11 @@ func main() {
 
 	coins, err := cointracker.GetCoinData()
 	if err != nil {
-		panic(err.Error())
+		cointracker.LogFatal(err.Error())
 	}
 
 	if len(coins) == 0 {
-		panic("Coin data is unavailable")
+		cointracker.LogFatal("Coin data is unavailable")
 	}
 
 	{
@@ -95,7 +95,7 @@ func main() {
 		jsonData, _ := json.Marshal(priceHistory)
 		err := ioutil.WriteFile(conf.PriceHistoryFile, jsonData, 0644)
 		if err != nil {
-			panic(err.Error())
+			fmt.Println(os.Stderr, err.Error())
 		}
 
 		if conf.SendEmail {
@@ -108,7 +108,7 @@ func main() {
 			d := gomail.NewDialer(conf.Smtp.Host, conf.Smtp.Port, conf.Smtp.Username, conf.Smtp.Password)
 
 			if err := d.DialAndSend(m); err != nil {
-				panic(err)
+				fmt.Println(os.Stderr, err.Error())
 			}
 		}
 	}

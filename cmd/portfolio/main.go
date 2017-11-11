@@ -15,16 +15,16 @@ func main() {
 	var portfolio map[string]float64
 	err := cointracker.ParseJsonFile(os.Args[1], &portfolio)
 	if err != nil {
-		panic(err.Error())
+		cointracker.LogFatal(err.Error())
 	}
 
 	coins, err := cointracker.GetCoinData()
 	if err != nil {
-		panic(err.Error())
+		cointracker.LogFatal(err.Error())
 	}
 
 	if len(coins) == 0 {
-		panic("Coin data is unavailable")
+		cointracker.LogFatal("Coin data is unavailable")
 	}
 
 	coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {

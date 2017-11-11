@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"fmt"
 )
 
 type Coin struct {
@@ -61,4 +63,9 @@ func ParseJsonFile(filename string, v interface{}) error {
 	}
 
 	return nil
+}
+
+func LogFatal(msg string) {
+	fmt.Fprintln(os.Stderr, msg)
+	os.Exit(1)
 }
