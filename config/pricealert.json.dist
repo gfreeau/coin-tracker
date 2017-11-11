@@ -1,0 +1,19 @@
+{
+  "coins": [
+    "ETH",
+    "XRP",
+    "BAT",
+    "OMG",
+    "ARK"
+  ],
+  "sendEmail": true,
+  "email": "my@email.com",
+  "smtp": {
+    "host": "smtp.server.com",
+    "port": 587,
+    "username": "",
+    "password": ""
+  },
+  "increasePercent": 0.10,
+  "priceHistoryFile": "./config/coin-prices.json"
+}

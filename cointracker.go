@@ -1,14 +1,14 @@
 package cointracker
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 )
 
 type Coin struct {
-	Name string
-	Symbol string
+	Name     string
+	Symbol   string
 	PriceUSD float64 `json:"price_usd,string"`
 	PriceCAD float64 `json:"price_cad,string"`
 }
@@ -37,14 +37,28 @@ func GetCoinData() (CoinList, error) {
 	return coins, nil
 }
 
-func FilterCoins(coins CoinList, test func(string) bool) CoinList {
+func FilterCoins(coins CoinList, test func(Coin) bool) CoinList {
 	filteredCoins := make(CoinList, 0)
 
 	for _, coin := range coins {
-		if test(coin.Symbol) {
+		if test(coin) {
 			filteredCoins = append(filteredCoins, coin)
 		}
 	}
 
 	return filteredCoins
+}
+
+func ParseJsonFile(filename string, v interface{}) error {
+	raw, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(raw, &v)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

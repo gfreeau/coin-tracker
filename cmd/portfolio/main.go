@@ -2,11 +2,8 @@ package main
 
 import (
 	"fmt"
-	"encoding/json"
-	"io/ioutil"
-	"os"
 	"github.com/gfreeau/coin-tracker"
-	"log"
+	"os"
 )
 
 func main() {
@@ -15,28 +12,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	rawConfig, err := ioutil.ReadFile(os.Args[1])
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
 	var portfolio map[string]float64
-	err = json.Unmarshal(rawConfig, &portfolio)
+	err := cointracker.ParseJsonFile(os.Args[1], &portfolio)
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err.Error())
 	}
 
 	coins, err := cointracker.GetCoinData()
 	if err != nil {
-		log.Fatal(err.Error())
+		panic(err.Error())
 	}
 
 	if len(coins) == 0 {
-		log.Fatal("Coin data is unavailable")
+		panic("Coin data is unavailable")
 	}
 
-	coins = cointracker.FilterCoins(coins, func(symbol string) bool {
-		_, ok := portfolio[symbol]
+	coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
+		_, ok := portfolio[c.Symbol]
 		return ok
 	})
 
