@@ -54,23 +54,16 @@ func main() {
 		cointracker.LogFatal("Coin data is unavailable")
 	}
 
-	{
-		set := make(map[string]bool)
-
-		for _, v := range conf.Coins {
-			set[v] = true
-
-			// default initial price for coin if it does not exist
-			if _, ok := priceHistory[v]; !ok {
-				priceHistory[v] = 0
-			}
+	for _, v := range conf.Coins {
+		if _, ok := priceHistory[v]; !ok {
+			priceHistory[v] = 0
 		}
-
-		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-			_, ok := set[c.Symbol]
-			return ok
-		})
 	}
+
+	coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
+		_, ok := priceHistory[c.Symbol]
+		return ok
+	})
 
 	alert := false
 	output := ""
