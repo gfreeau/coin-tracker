@@ -2,17 +2,18 @@ package cointracker
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"fmt"
 )
 
 type Coin struct {
-	Name     string
-	Symbol   string
-	PriceUSD float64 `json:"price_usd,string"`
-	PriceCAD float64 `json:"price_cad,string"`
+	Name             string
+	Symbol           string
+	PriceUSD         float64 `json:"price_usd,string"`
+	PriceCAD         float64 `json:"price_cad,string"`
+	PercentChange24h float64 `json:"percent_change_24h,string"`
 }
 
 type CoinList []Coin

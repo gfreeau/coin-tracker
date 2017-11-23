@@ -14,5 +14,5 @@
     "username": "",
     "password": ""
   },
-  "increasePercent": 10
+  "alertPercent": 10
 }

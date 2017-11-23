@@ -27,3 +27,17 @@ Create a json config file based on `pricealert.json.dist`.
 This command will monitor the coin symbols and e-mail you when the price increases by a percentage compared to the previous value.
 
 It should be setup as a cron job i.e hourly.
+
+Price Percent Alert
+-----------
+
+```
+go build -o ./bin/pricepercentalert cmd/pricepercentalert/main.go
+./bin/pricepercentalert ./config/pricepercentalert.json
+```
+
+Create a json config file based on `pricepercentalert.json.dist`.
+
+This command will monitor the coin symbols and e-mail you when the price changes by a percentage in the last day.
+
+It should be setup as a cron job i.e daily.
