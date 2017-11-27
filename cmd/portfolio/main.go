@@ -39,13 +39,23 @@ func main() {
 	for _, coin := range coins {
 		numberOfCoins := float64(portfolio[coin.Symbol])
 
+		totalCAD += numberOfCoins * coin.PriceCAD
+		totalUSD += numberOfCoins * coin.PriceUSD
+	}
+
+	for _, coin := range coins {
+		numberOfCoins := float64(portfolio[coin.Symbol])
+
 		priceCAD := numberOfCoins * coin.PriceCAD
 		priceUSD := numberOfCoins * coin.PriceUSD
 
-		output += fmt.Sprintf("%s: CAD %.4f, USD %.4f\n", coin.Symbol, priceCAD, priceUSD)
+		var percentage float64 = 0
 
-		totalUSD += priceUSD
-		totalCAD += priceCAD
+		if totalUSD > 0 {
+			percentage = priceUSD / totalUSD * 100
+		}
+
+		output += fmt.Sprintf("%s: %.2f%% CAD %.4f, USD %.4f\n", coin.Symbol, percentage, priceCAD, priceUSD)
 	}
 
 	if output == "" {
