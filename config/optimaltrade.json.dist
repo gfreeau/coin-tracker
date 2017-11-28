@@ -1,0 +1,22 @@
+{
+  "trades": [
+    {
+      "market": "BTC-ETH",
+      "sellUnits": 1,
+      "buyUnits": 30
+    },
+    {
+      "market": "ETH-BTC",
+      "sellUnits": 30,
+      "buyUnits": 1
+    }
+  ],
+  "sendEmail": true,
+  "email": "my@email.com",
+  "smtp": {
+    "host": "smtp.server.com",
+    "port": 587,
+    "username": "",
+    "password": ""
+  },
+}

@@ -41,3 +41,18 @@ Create a json config file based on `pricepercentalert.json.dist`.
 This command will monitor the coin symbols and e-mail you when the price changes by a percentage in the last day.
 
 It should be setup as a cron job i.e daily.
+
+Optimal Trade Alert
+-----------
+
+```
+go build -o ./bin/optimaltrade cmd/optimaltrade/main.go
+./bin/optimaltrade ./config/optimaltrade.json
+```
+
+Create a json config file based on `optimaltrade.json.dist`.
+
+This command will monitor the tickers and e-mail you when the trade conditions are met.
+
+It should be setup as a cron job i.e hourly.
+
