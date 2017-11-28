@@ -70,12 +70,8 @@ func main() {
 	}
 
 	fmt.Print("Totals:\n")
-	fmt.Printf("CAD: %.4f (%.2f%%)\n", totalCAD, percentIncrease(conf.InvestmentAmount, totalCAD))
+	fmt.Printf("CAD: %.4f (%.2f%%)\n", totalCAD, cointracker.PercentDiff(conf.InvestmentAmount, totalCAD))
 	fmt.Printf("USD: %.4f\n", totalUSD)
 	fmt.Print("\nCoins:\n")
 	fmt.Print(output)
-}
-
-func percentIncrease(from float64, to float64) float64 {
-	return ((to - from) / from) * 100
 }

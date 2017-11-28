@@ -9,6 +9,7 @@ import (
 )
 
 type Config struct {
+	AlertMode bool
 	Trades    []Trade
 	SendEmail bool
 	Email     string
@@ -61,17 +62,25 @@ func main() {
 		SellSymbol := marketSymbols[0]
 		buySymbol := marketSymbols[1]
 
-		currentBuy := trade.SellUnits / data.Result.Bid
+		targetAskPrice := trade.SellUnits / trade.BuyUnits
+		targetDiff := cointracker.PercentDiff(data.Result.Ask, targetAskPrice)
+		currentBuy := trade.SellUnits / data.Result.Ask
 
-		if currentBuy >= trade.BuyUnits {
-			alert = true
+		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
 			output += fmt.Sprintf("%s: %.2f %s = %.2f %s\n", trade.Market, trade.SellUnits, SellSymbol, currentBuy, buySymbol)
+			output += fmt.Sprintf("Target units: %.2f\n", trade.BuyUnits)
+			output += fmt.Sprintf("Target price: %.8f (%.2f%%)\n", targetAskPrice, targetDiff)
+			output += fmt.Sprintf("Current price: %.8f\n\n", data.Result.Ask)
+
+			if conf.AlertMode {
+				alert = true
+			}
 		}
 	}
 
-	if alert {
-		fmt.Print(output)
+	fmt.Print(output)
 
+	if alert {
 		if conf.SendEmail {
 			m := gomail.NewMessage()
 			m.SetHeader("To", conf.Email)
