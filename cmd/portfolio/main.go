@@ -6,17 +6,24 @@ import (
 	"os"
 )
 
+type Config struct {
+	InvestmentAmount float64
+	Holdings         map[string]float64
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Printf("Usage: %s configfilepath\n", os.Args[0])
 		os.Exit(1)
 	}
 
-	var portfolio map[string]float64
-	err := cointracker.ParseJsonFile(os.Args[1], &portfolio)
+	var conf Config
+	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
+
+	portfolio := conf.Holdings
 
 	coins, err := cointracker.GetCoinData()
 	if err != nil {
@@ -55,7 +62,7 @@ func main() {
 			percentage = priceUSD / totalUSD * 100
 		}
 
-		output += fmt.Sprintf("%s: %.2f%% CAD %.4f, USD %.4f\n", coin.Symbol, percentage, priceCAD, priceUSD)
+		output += fmt.Sprintf("%s: %.2f%% CAD %.4f (%.4f), USD %.4f (%.4f)\n", coin.Symbol, percentage, priceCAD, coin.PriceCAD, priceUSD, coin.PriceUSD)
 	}
 
 	if output == "" {
@@ -63,8 +70,12 @@ func main() {
 	}
 
 	fmt.Print("Totals:\n")
-	fmt.Printf("CAD: %.4f\n", totalCAD)
+	fmt.Printf("CAD: %.4f (%.2f%%)\n", totalCAD, percentIncrease(conf.InvestmentAmount, totalCAD))
 	fmt.Printf("USD: %.4f\n", totalUSD)
 	fmt.Print("\nCoins:\n")
 	fmt.Print(output)
+}
+
+func percentIncrease(from float64, to float64) float64 {
+	return ((to - from) / from) * 100
 }
