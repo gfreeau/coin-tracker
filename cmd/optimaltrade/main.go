@@ -59,6 +59,10 @@ func main() {
 			continue
 		}
 
+		if data.Result.Ask <= 0 {
+			continue
+		}
+
 		SellSymbol := marketSymbols[0]
 		buySymbol := marketSymbols[1]
 
