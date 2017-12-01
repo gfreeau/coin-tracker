@@ -73,9 +73,11 @@ func main() {
 			continue
 		}
 
+		currentUnitPrice := coin.PriceUSD
 		currentPurchasePrice := purchase.BuyUnits * coin.PriceUSD
 
 		if purchase.Currency == "CAD" {
+			currentUnitPrice = coin.PriceCAD
 			currentPurchasePrice = purchase.BuyUnits * coin.PriceCAD
 		}
 
@@ -84,8 +86,9 @@ func main() {
 			targetDiff := cointracker.PercentDiff(currentPurchasePrice, purchase.Price)
 
 			output += fmt.Sprintf("%s: %.2f = %.2f %s\n", purchase.Symbol, purchase.BuyUnits, currentPurchasePrice, purchase.Currency)
-			output += fmt.Sprintf("Target Unit Price: %.4f %s\n", targetPrice, purchase.Currency)
-			output += fmt.Sprintf("Target: %.4f %s (%.2f%%)\n\n", purchase.Price, purchase.Currency, targetDiff)
+			output += fmt.Sprintf("Target: %.2f %s (%.2f%%)\n", purchase.Price, purchase.Currency, targetDiff)
+			output += fmt.Sprintf("Current Unit Price: %.4f %s\n", currentUnitPrice, purchase.Currency)
+			output += fmt.Sprintf("Target Unit Price: %.4f %s\n\n", targetPrice, purchase.Currency)
 
 			if conf.AlertMode {
 				alert = true
