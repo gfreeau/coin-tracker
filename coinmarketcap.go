@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"fmt"
 )
 
 type Coin struct {
@@ -17,9 +18,13 @@ type Coin struct {
 type CoinList []Coin
 
 func GetCoinData() (CoinList, error) {
+	return GetTopCoinsData("CAD", 100)
+}
+
+func GetTopCoinsData(currency string, limit int) (CoinList, error) {
 	var coins CoinList
 
-	res, err := http.Get("https://api.coinmarketcap.com/v1/ticker/?convert=CAD&limit=100")
+	res, err := http.Get(fmt.Sprintf("https://api.coinmarketcap.com/v1/ticker/?convert=%s&limit=%s", currency, limit))
 	if err != nil {
 		return coins, err
 	}
@@ -48,4 +53,14 @@ func FilterCoins(coins CoinList, test func(Coin) bool) CoinList {
 	}
 
 	return filteredCoins
+}
+
+func GetCoinMap(coins CoinList) map[string]Coin {
+	coinMap := make(map[string]Coin, 0)
+
+	for _, coin := range coins {
+		coinMap[coin.Symbol] = coin
+	}
+
+	return coinMap
 }

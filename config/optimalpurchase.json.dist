@@ -1,0 +1,19 @@
+{
+  "alertMode": false,
+  "purchases": [
+    {
+      "symbol": "BTC",
+      "buyUnits": 1,
+      "price": 9000,
+      "currency": "USD"
+    }
+  ],
+  "sendEmail": true,
+  "email": "my@email.com",
+  "smtp": {
+    "host": "smtp.server.com",
+    "port": 587,
+    "username": "",
+    "password": ""
+  },
+}
