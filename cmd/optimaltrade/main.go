@@ -63,7 +63,7 @@ func main() {
 			continue
 		}
 
-		SellSymbol := marketSymbols[0]
+		sellSymbol := marketSymbols[0]
 		buySymbol := marketSymbols[1]
 
 		targetAskPrice := trade.SellUnits / trade.BuyUnits
@@ -71,10 +71,9 @@ func main() {
 		currentBuy := trade.SellUnits / data.Result.Ask
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
-			output += fmt.Sprintf("%s: %.2f %s = %.2f %s\n", trade.Market, trade.SellUnits, SellSymbol, currentBuy, buySymbol)
-			output += fmt.Sprintf("Target units: %.2f\n", trade.BuyUnits)
-			output += fmt.Sprintf("Target price: %.8f (%.2f%%)\n", targetAskPrice, targetDiff)
-			output += fmt.Sprintf("Current price: %.8f\n\n", data.Result.Ask)
+			output += fmt.Sprintf("%s: %.2f %s = %.2f %s (%.2f%%)\n", trade.Market, trade.SellUnits, sellSymbol, currentBuy, buySymbol, targetDiff)
+			output += fmt.Sprintf("Target: %.4f %s (%.8f)\n", trade.BuyUnits, buySymbol, targetAskPrice)
+			output += fmt.Sprintf("Current: %.4f %s (%.8f)\n\n", data.Result.Ask * trade.BuyUnits, sellSymbol, data.Result.Ask)
 
 			if conf.AlertMode {
 				alert = true
