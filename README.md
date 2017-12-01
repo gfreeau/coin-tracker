@@ -56,3 +56,17 @@ This command will monitor the tickers and e-mail you when the trade conditions a
 
 It should be setup as a cron job i.e hourly.
 
+Optimal Purchase Alert
+-----------
+
+```
+go build -o ./bin/optimalpurchase cmd/optimalpurchase/main.go
+./bin/optimalpurchase ./config/optimalpurchase.json
+```
+
+Create a json config file based on `optimalpurchase.json.dist`.
+
+This command will monitor the tickers and e-mail you when the trade conditions are met.
+
+It should be setup as a cron job i.e hourly.
+

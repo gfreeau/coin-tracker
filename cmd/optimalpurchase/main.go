@@ -85,7 +85,7 @@ func main() {
 
 			output += fmt.Sprintf("%s: %.2f = %.2f %s\n", purchase.Symbol, purchase.BuyUnits, currentPurchasePrice, purchase.Currency)
 			output += fmt.Sprintf("Target Unit Price: %.4f %s\n", targetPrice, purchase.Currency)
-			output += fmt.Sprintf("Target: %.4f %s (%.2f%%)\n", purchase.Price, purchase.Currency, targetDiff)
+			output += fmt.Sprintf("Target: %.4f %s (%.2f%%)\n\n", purchase.Price, purchase.Currency, targetDiff)
 
 			if conf.AlertMode {
 				alert = true
@@ -100,7 +100,7 @@ func main() {
 			m := gomail.NewMessage()
 			m.SetHeader("To", conf.Email)
 			m.SetHeader("From", conf.Email)
-			m.SetHeader("Subject", "Optimal Trade Alert")
+			m.SetHeader("Subject", "Optimal Purchase Alert")
 			m.SetBody("text/plain", output)
 
 			d := gomail.NewDialer(conf.Smtp.Host, conf.Smtp.Port, conf.Smtp.Username, conf.Smtp.Password)
