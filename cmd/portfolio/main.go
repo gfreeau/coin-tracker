@@ -9,6 +9,7 @@ import (
 type Config struct {
 	InvestmentAmount float64
 	Holdings         map[string]float64
+	UseBittrexPrice  []string
 }
 
 func main() {
@@ -38,6 +39,31 @@ func main() {
 		_, ok := portfolio[c.Symbol]
 		return ok
 	})
+
+	for _, symbol := range conf.UseBittrexPrice {
+		// Sometimes price is skewed by foreign exchanges, use bittrex price to get a more accurate value
+		marketData, err := cointracker.GetTickerData("BTC-" + symbol)
+
+		if err != nil {
+			continue
+		}
+
+		for i := range coins {
+			if coins[i].Symbol == symbol {
+				// use reference to overwrite value
+				coin := &coins[i]
+
+				BTCUSDRate := coin.PriceUSD / coin.PriceBTC
+				USDCADRate := coin.PriceCAD / coin.PriceUSD
+
+				coin.PriceBTC = marketData.Result.Ask
+				coin.PriceUSD = coin.PriceBTC * BTCUSDRate
+				coin.PriceCAD = coin.PriceUSD * USDCADRate
+
+				break
+			}
+		}
+	}
 
 	var totalCAD float64 = 0
 	var totalUSD float64 = 0
