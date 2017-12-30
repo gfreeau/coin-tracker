@@ -22,9 +22,10 @@ type Config struct {
 }
 
 type Trade struct {
-	Market    string
-	SellUnits float64
-	BuyUnits  float64
+	Market     string
+	SellUnits  float64
+	SellSymbol string
+	BuyUnits   float64
 }
 
 func main() {
@@ -63,16 +64,26 @@ func main() {
 			continue
 		}
 
-		sellSymbol := marketSymbols[0]
-		buySymbol := marketSymbols[1]
+		var sellSymbol, buySymbol string
+		var targetPrice, targetDiff, currentBuy float64
 
-		targetAskPrice := trade.SellUnits / trade.BuyUnits
-		targetDiff := cointracker.PercentDiff(data.Result.Ask, targetAskPrice)
-		currentBuy := trade.SellUnits / data.Result.Ask
+		if trade.SellSymbol == marketSymbols[1] {
+			sellSymbol = marketSymbols[1]
+			buySymbol = marketSymbols[0]
+			targetPrice = trade.BuyUnits / trade.SellUnits
+			targetDiff = cointracker.PercentDiff(targetPrice, data.Result.Bid)
+			currentBuy = trade.SellUnits * data.Result.Bid
+		} else {
+			sellSymbol = marketSymbols[0]
+			buySymbol = marketSymbols[1]
+			targetPrice = trade.SellUnits / trade.BuyUnits
+			targetDiff = cointracker.PercentDiff(data.Result.Ask, targetPrice)
+			currentBuy = trade.SellUnits / data.Result.Ask
+		}
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
 			output += fmt.Sprintf("%s: %.2f %s = %.2f %s (%.2f%%)\n", trade.Market, trade.SellUnits, sellSymbol, currentBuy, buySymbol, targetDiff)
-			output += fmt.Sprintf("Target: %.4f %s (%.8f)\n", trade.BuyUnits, buySymbol, targetAskPrice)
+			output += fmt.Sprintf("Target: %.4f %s (%.8f)\n", trade.BuyUnits, buySymbol, targetPrice)
 			output += fmt.Sprintf("Current: %.4f %s (%.8f)\n\n", data.Result.Ask * trade.BuyUnits, sellSymbol, data.Result.Ask)
 
 			if conf.AlertMode {
