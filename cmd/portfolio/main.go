@@ -67,6 +67,9 @@ func main() {
 
 	var totalCAD float64 = 0
 	var totalUSD float64 = 0
+	var totalBTC float64 = 0
+	var totalETH float64 = 0
+	var ETHCADPrice float64 = 0
 	var output string
 
 	for _, coin := range coins {
@@ -74,6 +77,15 @@ func main() {
 
 		totalCAD += numberOfCoins * coin.PriceCAD
 		totalUSD += numberOfCoins * coin.PriceUSD
+		totalBTC += numberOfCoins * coin.PriceBTC
+
+		if coin.Symbol == "ETH" {
+			ETHCADPrice = coin.PriceCAD
+		}
+	}
+
+	if ETHCADPrice > 0 {
+		totalETH = totalCAD / ETHCADPrice
 	}
 
 	for _, coin := range coins {
@@ -98,6 +110,10 @@ func main() {
 	fmt.Print("Totals:\n")
 	fmt.Printf("CAD: %.4f (%.2f%%)\n", totalCAD, cointracker.PercentDiff(conf.InvestmentAmount, totalCAD))
 	fmt.Printf("USD: %.4f\n", totalUSD)
+	fmt.Printf("BTC: %.4f\n", totalBTC)
+	if ETHCADPrice > 0 {
+		fmt.Printf("ETH: %.4f\n", totalETH)
+	}
 	fmt.Print("\nCoins:\n")
 	fmt.Print(output)
 }
