@@ -100,7 +100,15 @@ func main() {
 			percentage = priceUSD / totalUSD * 100
 		}
 
-		output += fmt.Sprintf("%s: %.2f%% CAD %.4f (%.4f), USD %.4f (%.4f)\n", coin.Symbol, percentage, priceCAD, coin.PriceCAD, priceUSD, coin.PriceUSD)
+		var totalETH float64 = 0
+		var priceETH float64 = 0
+
+		if ETHCADPrice > 0 {
+			totalETH = priceCAD / ETHCADPrice
+			priceETH = coin.PriceCAD / ETHCADPrice
+		}
+
+		output += fmt.Sprintf("%s: %.2f%% CAD %.4f (%.4f), USD %.4f (%.4f), ETH %.4f (%.8f)\n", coin.Symbol, percentage, priceCAD, coin.PriceCAD, priceUSD, coin.PriceUSD, totalETH, priceETH)
 	}
 
 	if output == "" {
