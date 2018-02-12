@@ -25,7 +25,7 @@ func GetCoinData() (CoinList, error) {
 func GetTopCoinsData(currency string, limit int) (CoinList, error) {
 	var coins CoinList
 
-	res, err := http.Get(fmt.Sprintf("https://api.coinmarketcap.com/v1/ticker/?convert=%s&limit=%s", currency, limit))
+	res, err := http.Get(fmt.Sprintf("https://api.coinmarketcap.com/v1/ticker/?convert=%s&limit=%d", currency, limit))
 	if err != nil {
 		return coins, err
 	}
