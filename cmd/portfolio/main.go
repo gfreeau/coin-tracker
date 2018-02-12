@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
 	"os"
+	"github.com/olekukonko/tablewriter"
 )
 
 type Config struct {
@@ -70,7 +71,6 @@ func main() {
 	var totalBTC float64 = 0
 	var totalETH float64 = 0
 	var ETHCADPrice float64 = 0
-	var output string
 
 	for _, coin := range coins {
 		numberOfCoins := float64(portfolio[coin.Symbol])
@@ -88,7 +88,9 @@ func main() {
 		totalETH = totalCAD / ETHCADPrice
 	}
 
-	for _, coin := range coins {
+	tableRows := make([][]string, len(coins))
+
+	for i, coin := range coins {
 		numberOfCoins := float64(portfolio[coin.Symbol])
 
 		priceCAD := numberOfCoins * coin.PriceCAD
@@ -100,28 +102,40 @@ func main() {
 			percentage = priceUSD / totalUSD * 100
 		}
 
-		var totalETH float64 = 0
 		var priceETH float64 = 0
+		var coinPriceETH float64 = 0
 
 		if ETHCADPrice > 0 {
-			totalETH = priceCAD / ETHCADPrice
-			priceETH = coin.PriceCAD / ETHCADPrice
+			priceETH = priceCAD / ETHCADPrice
+			coinPriceETH = coin.PriceCAD / ETHCADPrice
 		}
 
-		output += fmt.Sprintf("%s: %.2f%% CAD %.4f (%.4f), USD %.4f (%.4f), ETH %.4f (%.8f)\n", coin.Symbol, percentage, priceCAD, coin.PriceCAD, priceUSD, coin.PriceUSD, totalETH, priceETH)
+		tableRows[i] = []string{
+			coin.Symbol,
+			fmt.Sprintf("%.2f%%", percentage),
+			fmt.Sprintf("$%.4f", priceCAD),
+			fmt.Sprintf("$%.4f", coin.PriceCAD),
+			fmt.Sprintf("$%.4f", priceUSD),
+			fmt.Sprintf("$%.4f", coin.PriceUSD),
+			fmt.Sprintf("%.4f", priceETH),
+			fmt.Sprintf("%.8f", coinPriceETH),
+		}
 	}
 
-	if output == "" {
-		output = "None\n"
-	}
+	summaryTable := tablewriter.NewWriter(os.Stdout)
+	summaryTable.SetHeader([]string{"Return", "CAD", "USD", "BTC", "ETH"})
+	summaryTable.Append([]string{
+		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
+		fmt.Sprintf("$%.4f", totalCAD),
+		fmt.Sprintf("$%.4f", totalUSD),
+		fmt.Sprintf("%.4f", totalBTC),
+		fmt.Sprintf("%.4f", totalETH),
+	})
+	summaryTable.Render()
 
-	fmt.Print("Totals:\n")
-	fmt.Printf("CAD: %.4f (%.2f%%)\n", totalCAD, cointracker.PercentDiff(conf.InvestmentAmount, totalCAD))
-	fmt.Printf("USD: %.4f\n", totalUSD)
-	fmt.Printf("BTC: %.4f\n", totalBTC)
-	if ETHCADPrice > 0 {
-		fmt.Printf("ETH: %.4f\n", totalETH)
-	}
-	fmt.Print("\nCoins:\n")
-	fmt.Print(output)
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "USD", "Price (USD)", "ETH", "Price (ETH)"})
+
+	table.AppendBulk(tableRows)
+	table.Render()
 }
