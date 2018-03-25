@@ -70,7 +70,7 @@ func main() {
 	var totalUSD float64 = 0
 	var totalBTC float64 = 0
 	var totalETH float64 = 0
-	var ETHCADPrice float64 = 0
+	var ETHUSDPrice float64 = 0
 
 	for _, coin := range coins {
 		numberOfCoins := float64(portfolio[coin.Symbol])
@@ -80,12 +80,12 @@ func main() {
 		totalBTC += numberOfCoins * coin.PriceBTC
 
 		if coin.Symbol == "ETH" {
-			ETHCADPrice = coin.PriceCAD
+			ETHUSDPrice = coin.PriceUSD
 		}
 	}
 
-	if ETHCADPrice > 0 {
-		totalETH = totalCAD / ETHCADPrice
+	if ETHUSDPrice > 0 {
+		totalETH = totalUSD / ETHUSDPrice
 	}
 
 	tableRows := make([][]string, len(coins))
@@ -105,9 +105,9 @@ func main() {
 		var priceETH float64 = 0
 		var coinPriceETH float64 = 0
 
-		if ETHCADPrice > 0 {
-			priceETH = priceCAD / ETHCADPrice
-			coinPriceETH = coin.PriceCAD / ETHCADPrice
+		if ETHUSDPrice > 0 {
+			priceETH = priceCAD / ETHUSDPrice
+			coinPriceETH = coin.PriceUSD / ETHUSDPrice
 		}
 
 		tableRows[i] = []string{
@@ -123,11 +123,12 @@ func main() {
 	}
 
 	summaryTable := tablewriter.NewWriter(os.Stdout)
-	summaryTable.SetHeader([]string{"Return", "CAD", "USD", "BTC", "ETH"})
+	summaryTable.SetHeader([]string{"Return %", "Return", "CAD", "USD", "BTC", "ETH"})
 	summaryTable.Append([]string{
 		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
-		fmt.Sprintf("$%.4f", totalCAD),
-		fmt.Sprintf("$%.4f", totalUSD),
+		fmt.Sprintf("$%.2f", totalCAD - conf.InvestmentAmount),
+		fmt.Sprintf("$%.2f", totalCAD),
+		fmt.Sprintf("$%.2f", totalUSD),
 		fmt.Sprintf("%.4f", totalBTC),
 		fmt.Sprintf("%.4f", totalETH),
 	})
