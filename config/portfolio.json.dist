@@ -1,4 +1,5 @@
 {
+  "topCoinLimit": 100,
   "investmentAmount": 10000,
   "holdings": {
     "BTC": 10,

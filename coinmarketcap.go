@@ -56,6 +56,16 @@ func FilterCoins(coins CoinList, test func(Coin) bool) CoinList {
 	return filteredCoins
 }
 
+func FindCoin(symbol string, coins CoinList) (*Coin) {
+	for _, coin := range coins {
+		if symbol == coin.Symbol {
+			return &coin
+		}
+	}
+
+	return nil
+}
+
 func GetCoinMap(coins CoinList) map[string]Coin {
 	coinMap := make(map[string]Coin, 0)
 
