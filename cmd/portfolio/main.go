@@ -76,6 +76,7 @@ func main() {
 	var totalBTC float64 = 0
 	var totalETH float64 = 0
 	var ETHBTCPrice float64 = 0
+	var ChangeCAD24hAgo float64 = 0
 
 	ETH := cointracker.FindCoin("ETH", allCoins)
 
@@ -89,6 +90,8 @@ func main() {
 		totalCAD += numberOfCoins * coin.PriceCAD
 		totalUSD += numberOfCoins * coin.PriceUSD
 		totalBTC += numberOfCoins * coin.PriceBTC
+
+		ChangeCAD24hAgo += numberOfCoins * coin.PriceCAD * (coin.PercentChange24h / 100)
 	}
 
 	if ETHBTCPrice > 0 {
@@ -133,10 +136,11 @@ func main() {
 	}
 
 	summaryTable := tablewriter.NewWriter(os.Stdout)
-	summaryTable.SetHeader([]string{"Return %", "Return", "CAD", "USD", "ETH", "BTC"})
+	summaryTable.SetHeader([]string{"Return %", "Return", "24H (CAD)", "CAD", "USD", "ETH", "BTC"})
 	summaryTable.Append([]string{
 		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
 		fmt.Sprintf("$%.2f", totalCAD - conf.InvestmentAmount),
+		fmt.Sprintf("$%.2f", ChangeCAD24hAgo),
 		fmt.Sprintf("$%.2f", totalCAD),
 		fmt.Sprintf("$%.2f", totalUSD),
 		fmt.Sprintf("%.4f", totalETH),

@@ -92,6 +92,10 @@ func ParseJsonFile(filename string, v interface{}) error {
 }
 
 func PercentDiff(from float64, to float64) float64 {
+	if from == 0 {
+		return 0
+	}
+
 	return ((to - from) / from) * 100
 }
 
