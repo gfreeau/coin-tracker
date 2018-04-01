@@ -5,13 +5,14 @@ import (
 	"github.com/gfreeau/coin-tracker"
 	"os"
 	"github.com/olekukonko/tablewriter"
+	"github.com/gfreeau/coin-tracker/binance"
 )
 
 type Config struct {
 	TopCoinLimit     int
 	InvestmentAmount float64
 	Holdings         map[string]float64
-	UseBittrexPrice  []string
+	UseBinancePrice  []string
 }
 
 func main() {
@@ -46,27 +47,35 @@ func main() {
 		return ok
 	})
 
-	for _, symbol := range conf.UseBittrexPrice {
-		// Sometimes price is skewed by foreign exchanges, use bittrex price to get a more accurate value
-		marketData, err := cointracker.GetTickerData("BTC-" + symbol)
+	if len(conf.UseBinancePrice) > 0 {
+		marketPriceMap, _ := binance.GetMarketPricesMap()
 
-		if err != nil {
-			continue
-		}
+		for _, symbol := range conf.UseBinancePrice {
+			if symbol == "BTC" {
+				continue
+			}
 
-		for i := range coins {
-			if coins[i].Symbol == symbol {
-				// use reference to overwrite value
-				coin := &coins[i]
+			// Sometimes price is skewed by foreign exchanges, use binance price to get a more accurate value
+			marketPrice, ok := marketPriceMap[symbol + "BTC"]
 
-				BTCUSDRate := coin.PriceUSD / coin.PriceBTC
-				USDCADRate := coin.PriceCAD / coin.PriceUSD
+			if !ok {
+				continue
+			}
 
-				coin.PriceBTC = marketData.Result.Ask
-				coin.PriceUSD = coin.PriceBTC * BTCUSDRate
-				coin.PriceCAD = coin.PriceUSD * USDCADRate
+			for i := range coins {
+				if coins[i].Symbol == symbol {
+					// use reference to overwrite value
+					coin := &coins[i]
 
-				break
+					BTCUSDRate := coin.PriceUSD / coin.PriceBTC
+					USDCADRate := coin.PriceCAD / coin.PriceUSD
+
+					coin.PriceBTC = marketPrice
+					coin.PriceUSD = coin.PriceBTC * BTCUSDRate
+					coin.PriceCAD = coin.PriceUSD * USDCADRate
+
+					break
+				}
 			}
 		}
 	}

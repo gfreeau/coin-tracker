@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
+	"github.com/gfreeau/coin-tracker/binance"
+	"github.com/olekukonko/tablewriter"
 	"gopkg.in/gomail.v2"
 	"os"
-	"strings"
 )
 
 type Config struct {
@@ -22,10 +24,13 @@ type Config struct {
 }
 
 type Trade struct {
-	Market     string
-	SellUnits  float64
-	SellSymbol string
-	BuyUnits   float64
+	IntermediarySymbol string
+	MajorSymbol        string
+	MinorSymbol        string
+	SellSymbol         string
+	SellUnits          float64
+	BuySymbol          string
+	BuyUnits           float64
 }
 
 func main() {
@@ -40,51 +45,64 @@ func main() {
 		cointracker.LogFatal(err.Error())
 	}
 
+	priceMap, err := binance.GetMarketPricesMap()
+
+	if err != nil {
+		cointracker.LogFatal(err.Error())
+	}
+
 	alert := false
-	output := ""
+	tableRows := make([][]string, 0)
 
 	for _, trade := range conf.Trades {
-		marketSymbols := strings.Split(trade.Market, "-")
+		var price float64 = 0
 
-		if len(marketSymbols) != 2 {
-			continue
-		}
+		if len(trade.IntermediarySymbol) > 0 {
+			sellMarket := trade.BuySymbol + trade.IntermediarySymbol
+			sellMarketPrice := priceMap[sellMarket]
 
-		data, err := cointracker.GetTickerData(trade.Market)
+			buyMarket := trade.SellSymbol + trade.IntermediarySymbol
+			buyMarketPrice := priceMap[buyMarket]
 
-		if err != nil {
-			continue
-		}
+			if buyMarketPrice <= 0 {
+				continue
+			}
 
-		if data.Success == false {
-			continue
-		}
-
-		if data.Result.Ask <= 0 {
-			continue
-		}
-
-		var sellSymbol, buySymbol string
-		var targetPrice, targetDiff, currentBuy float64
-
-		if trade.SellSymbol == marketSymbols[1] {
-			sellSymbol = marketSymbols[1]
-			buySymbol = marketSymbols[0]
-			targetPrice = trade.BuyUnits / trade.SellUnits
-			targetDiff = cointracker.PercentDiff(targetPrice, data.Result.Bid)
-			currentBuy = trade.SellUnits * data.Result.Bid
+			price = sellMarketPrice / buyMarketPrice
 		} else {
-			sellSymbol = marketSymbols[0]
-			buySymbol = marketSymbols[1]
+			market := trade.MinorSymbol + trade.MajorSymbol
+			price = priceMap[market]
+		}
+
+		if price <= 0 {
+			continue
+		}
+
+		if trade.SellUnits <= 0 {
+			continue
+		}
+
+		var targetPrice, diff, currentBuy float64
+
+		if trade.SellSymbol == trade.MinorSymbol {
+			targetPrice = trade.BuyUnits / trade.SellUnits
+			diff = cointracker.PercentDiff(targetPrice, price)
+			currentBuy = trade.SellUnits * price
+		} else {
 			targetPrice = trade.SellUnits / trade.BuyUnits
-			targetDiff = cointracker.PercentDiff(data.Result.Ask, targetPrice)
-			currentBuy = trade.SellUnits / data.Result.Ask
+			diff = cointracker.PercentDiff(price, targetPrice)
+			currentBuy = trade.SellUnits / price
 		}
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
-			output += fmt.Sprintf("%s: %.2f %s = %.2f %s (%.2f%%)\n", trade.Market, trade.SellUnits, sellSymbol, currentBuy, buySymbol, targetDiff)
-			output += fmt.Sprintf("Target: %.4f %s (%.8f)\n", trade.BuyUnits, buySymbol, targetPrice)
-			output += fmt.Sprintf("Current: %.4f %s (%.8f)\n\n", data.Result.Ask * trade.BuyUnits, sellSymbol, data.Result.Ask)
+			tableRows = append(tableRows, []string{
+				fmt.Sprintf("%.2f %s", trade.SellUnits, trade.SellSymbol),
+				fmt.Sprintf("%.2f %s", trade.BuyUnits, trade.BuySymbol),
+				fmt.Sprintf("%.8f %s", currentBuy, trade.BuySymbol),
+				fmt.Sprintf("%.2f%%", diff),
+				fmt.Sprintf("%.8f %s", targetPrice, trade.SellSymbol),
+				fmt.Sprintf("%.8f %s", price, trade.SellSymbol),
+			})
 
 			if conf.AlertMode {
 				alert = true
@@ -92,7 +110,19 @@ func main() {
 		}
 	}
 
-	fmt.Print(output)
+	if len(tableRows) == 0 {
+		os.Exit(0)
+	}
+
+	buf := new(bytes.Buffer)
+
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"Sell", "Target Buy", "Current Buy", "Diff", "Target Price", "Current Price"})
+
+	table.AppendBulk(tableRows)
+	table.Render()
+
+	fmt.Print(buf)
 
 	if alert {
 		if conf.SendEmail {
@@ -100,7 +130,7 @@ func main() {
 			m.SetHeader("To", conf.Email)
 			m.SetHeader("From", conf.Email)
 			m.SetHeader("Subject", "Optimal Trade Alert")
-			m.SetBody("text/plain", output)
+			m.SetBody("text/plain", buf.String())
 
 			d := gomail.NewDialer(conf.Smtp.Host, conf.Smtp.Port, conf.Smtp.Username, conf.Smtp.Password)
 

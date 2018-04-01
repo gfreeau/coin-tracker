@@ -4,5 +4,6 @@
   "holdings": {
     "BTC": 10,
     "ETH": 100
-  }
+  },
+  "useBinancePrice": ["ETH"]
 }

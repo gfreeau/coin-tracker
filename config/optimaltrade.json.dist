@@ -1,14 +1,27 @@
 {
   "trades": [
     {
-      "market": "BTC-ETH",
+      "minorSymbol": "ETH",
+      "majorSymbol": "BTC",
+      "sellSymbol": "BTC",
       "sellUnits": 1,
+      "buySymbol": "ETH",
       "buyUnits": 30
     },
     {
-      "market": "ETH-BTC",
-      "sellUnits": 30,
-      "buyUnits": 1
+      "intermediarySymbol": "BTC",
+      "sellSymbol": "OMG",
+      "sellUnits": 100,
+      "buySymbol": "REQ",
+      "buyUnits": 5000
+    },
+    {
+      "minorSymbol": "OMG",
+      "majorSymbol": "BTC",
+      "sellSymbol": "BTC",
+      "sellUnits": 1,
+      "buySymbol": "OMG",
+      "buyUnits": 1000
     }
   ],
   "sendEmail": true,
