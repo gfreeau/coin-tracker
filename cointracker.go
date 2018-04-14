@@ -14,6 +14,7 @@ type Coin struct {
 	PriceUSD         float64 `json:"price_usd,string"`
 	PriceCAD         float64 `json:"price_cad,string"`
 	PriceBTC         float64 `json:"price_btc,string"`
+	Rank             int     `json:"rank,string"`
 	PercentChange24h float64 `json:"percent_change_24h,string"`
 }
 
