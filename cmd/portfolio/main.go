@@ -147,7 +147,7 @@ func main() {
 	}
 
 	summaryTable := tablewriter.NewWriter(os.Stdout)
-	summaryTable.SetHeader([]string{"Return %", "CAD", "USD", "ETH", "BTC", "Return (CAD)", "24H (CAD)"})
+	summaryTable.SetHeader([]string{"Return %", "CAD", "USD", "ETH", "BTC", "Return (CAD)", "24H (CAD)", "24H %"})
 	summaryTable.Append([]string{
 		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
 		fmt.Sprintf("$%.2f", totalCAD),
@@ -156,6 +156,7 @@ func main() {
 		fmt.Sprintf("%.4f", totalBTC),
 		fmt.Sprintf("$%.2f", totalCAD - conf.InvestmentAmount),
 		fmt.Sprintf("$%.2f", ChangeCAD24hAgo),
+		fmt.Sprintf("%.2f%%", ChangeCAD24hAgo / (totalCAD - ChangeCAD24hAgo) * 100),
 	})
 	summaryTable.Render()
 
