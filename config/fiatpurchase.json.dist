@@ -1,0 +1,14 @@
+{
+  "purchases": [
+    {
+      "symbol": "BTC",
+      "amount": 10000,
+      "currency": "CAD"
+    },
+    {
+      "symbol": "ETH",
+      "amount": 10000,
+      "currency": "CAD"
+    }
+  ]
+}
