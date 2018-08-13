@@ -13,9 +13,10 @@ type Config struct {
 }
 
 type Purchase struct {
-	Symbol   string
-	Amount   float64
-	Currency string
+	Symbol         string
+	CurrencyAmount float64
+	UnitAmount     float64
+	Currency       string
 }
 
 func main() {
@@ -63,22 +64,29 @@ func main() {
 			continue
 		}
 
-		units := purchase.Amount / coin.PriceUSD
-
+		units := purchase.UnitAmount
+		currencyAmount := purchase.CurrencyAmount
+		coinPrice := coin.PriceUSD
 		if purchase.Currency == "CAD" {
-			units = purchase.Amount / coin.PriceCAD
+			coinPrice = coin.PriceCAD
+		}
+
+		if units > 0 {
+			currencyAmount = purchase.UnitAmount * coinPrice
+		} else {
+			units = purchase.CurrencyAmount / coinPrice
 		}
 
 		tableRows[i] = []string{
 			purchase.Currency,
-			fmt.Sprintf("$%.2f", purchase.Amount),
+			fmt.Sprintf("$%.2f", currencyAmount),
 			coin.Symbol,
 			fmt.Sprintf("%.4f", units),
 		}
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Currency", "Amount", "Symbol", "Units"})
+	table.SetHeader([]string{"Currency", "CurrencyAmount", "Symbol", "Units"})
 
 	table.AppendBulk(tableRows)
 	table.Render()
