@@ -51,11 +51,48 @@ func main() {
 		cointracker.LogFatal(err.Error())
 	}
 
+	coins, err := cointracker.GetCoinData()
+	if err != nil {
+		cointracker.LogFatal(err.Error())
+	}
+
+	if len(coins) == 0 {
+		cointracker.LogFatal("Coin data is unavailable")
+	}
+
+	{
+		set := make(map[string]bool, 0)
+
+		for _, t := range conf.Trades {
+			set[t.SellSymbol] = true
+			set[t.BuySymbol] = true
+		}
+
+		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
+			_, ok := set[c.Symbol]
+			return ok
+		})
+	}
+
+	coinMap := cointracker.GetCoinMap(coins)
+
 	alert := false
 	tableRows := make([][]string, 0)
 
 	for _, trade := range conf.Trades {
 		var price float64 = 0
+
+		sellCoin, exists := coinMap[trade.SellSymbol]
+
+		if !exists {
+			continue
+		}
+
+		buyCoin, exists := coinMap[trade.BuySymbol]
+
+		if !exists {
+			continue
+		}
 
 		if len(trade.IntermediarySymbol) > 0 {
 			sellMarket := trade.BuySymbol + trade.IntermediarySymbol
@@ -82,16 +119,24 @@ func main() {
 			continue
 		}
 
-		var targetPrice, diff, currentBuy float64
+		var currentBuy, targetSellPrice, targetBuyPrice, diff, targetSellPriceUSD, targetBuyPriceUSD, currentBuyPriceUSD float64
 
 		if trade.SellSymbol == trade.MinorSymbol {
-			targetPrice = trade.BuyUnits / trade.SellUnits
-			diff = cointracker.PercentDiff(targetPrice, price)
 			currentBuy = trade.SellUnits * price
+			targetSellPrice = trade.SellUnits / trade.BuyUnits
+			targetBuyPrice = trade.BuyUnits / trade.SellUnits
+			diff = cointracker.PercentDiff(targetBuyPrice, price)
+			targetSellPriceUSD = buyCoin.PriceUSD / targetSellPrice
+			targetBuyPriceUSD = sellCoin.PriceUSD / targetBuyPrice
+			currentBuyPriceUSD = sellCoin.PriceUSD / price
 		} else {
-			targetPrice = trade.SellUnits / trade.BuyUnits
-			diff = cointracker.PercentDiff(price, targetPrice)
 			currentBuy = trade.SellUnits / price
+			targetSellPrice = trade.BuyUnits / trade.SellUnits
+			targetBuyPrice = trade.SellUnits / trade.BuyUnits
+			diff = cointracker.PercentDiff(price, targetBuyPrice)
+			targetSellPriceUSD = targetSellPrice * buyCoin.PriceUSD
+			targetBuyPriceUSD = targetBuyPrice * sellCoin.PriceUSD
+			currentBuyPriceUSD = price * sellCoin.PriceUSD
 		}
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
@@ -100,8 +145,10 @@ func main() {
 				fmt.Sprintf("%.2f %s", trade.BuyUnits, trade.BuySymbol),
 				fmt.Sprintf("%.8f %s", currentBuy, trade.BuySymbol),
 				fmt.Sprintf("%.2f%%", diff),
-				fmt.Sprintf("%.8f %s", targetPrice, trade.SellSymbol),
-				fmt.Sprintf("%.8f %s", price, trade.SellSymbol),
+				fmt.Sprintf("%s: %.4f USD", trade.SellSymbol, sellCoin.PriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.SellSymbol, targetSellPriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.BuySymbol, currentBuyPriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.BuySymbol, targetBuyPriceUSD),
 			})
 
 			if conf.AlertMode {
@@ -117,7 +164,7 @@ func main() {
 	buf := new(bytes.Buffer)
 
 	table := tablewriter.NewWriter(buf)
-	table.SetHeader([]string{"Sell", "Target Buy", "Current Buy", "Diff", "Target Price", "Current Price"})
+	table.SetHeader([]string{"Sell", "Target Buy", "Current Buy", "Diff", "Current Sell Price", "Target Sell Price", "Current Buy Price", "Target Buy Price"})
 
 	table.AppendBulk(tableRows)
 	table.Render()
