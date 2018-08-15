@@ -125,7 +125,6 @@ func main() {
 			currentBuy = trade.SellUnits * price
 			targetSellPrice = trade.SellUnits / trade.BuyUnits
 			targetBuyPrice = trade.BuyUnits / trade.SellUnits
-			diff = cointracker.PercentDiff(targetBuyPrice, price)
 			targetSellPriceUSD = buyCoin.PriceUSD / targetSellPrice
 			targetBuyPriceUSD = sellCoin.PriceUSD / targetBuyPrice
 			currentBuyPriceUSD = sellCoin.PriceUSD / price
@@ -133,11 +132,12 @@ func main() {
 			currentBuy = trade.SellUnits / price
 			targetSellPrice = trade.BuyUnits / trade.SellUnits
 			targetBuyPrice = trade.SellUnits / trade.BuyUnits
-			diff = cointracker.PercentDiff(price, targetBuyPrice)
 			targetSellPriceUSD = targetSellPrice * buyCoin.PriceUSD
 			targetBuyPriceUSD = targetBuyPrice * sellCoin.PriceUSD
 			currentBuyPriceUSD = price * sellCoin.PriceUSD
 		}
+
+		diff = cointracker.PercentDiff(targetBuyPrice, price)
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
 			tableRows = append(tableRows, []string{
