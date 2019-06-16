@@ -43,8 +43,8 @@ func main() {
 
 	exchangeIds := make([]string, len(conf.Purchases))
 
-	for i, p := range conf.Purchases {
-		exchangeIds[i] = p.ExchangeId
+	for _, p := range conf.Purchases {
+		exchangeIds = append(exchangeIds, p.ExchangeId)
 	}
 
 	coinMap, err := coingecko.GetCoinMap(exchangeIds)

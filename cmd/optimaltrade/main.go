@@ -46,17 +46,8 @@ func main() {
 
 	exchangeIds := make([]string, 0)
 
-	{
-		set := make(map[string]bool, 0)
-
-		for _, p := range conf.Trades {
-			set[p.SellId] = true
-			set[p.BuyId] = true
-		}
-
-		for k := range set {
-			exchangeIds = append(exchangeIds, k)
-		}
+	for _, p := range conf.Trades {
+		exchangeIds = append(exchangeIds, p.SellId, p.BuyId)
 	}
 
 	coinMap, err := coingecko.GetCoinMap(exchangeIds)
