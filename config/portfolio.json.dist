@@ -1,9 +1,15 @@
 {
-  "topCoinLimit": 100,
-  "investmentAmount": 10000,
-  "holdings": {
-    "BTC": 10,
-    "ETH": 100
-  },
-  "useBinancePrice": ["ETH"]
+  "investmentAmount": 1000,
+  "holdings": [
+    {
+      "name": "BTC",
+      "exchangeId": "bitcoin",
+      "units": 10
+    },
+    {
+      "name": "ETH",
+      "exchangeId": "ethereum",
+      "units": 10
+    }
+  ]
 }

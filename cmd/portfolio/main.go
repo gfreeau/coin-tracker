@@ -5,14 +5,18 @@ import (
 	"github.com/gfreeau/coin-tracker"
 	"os"
 	"github.com/olekukonko/tablewriter"
-	"github.com/gfreeau/coin-tracker/binance"
+	"github.com/gfreeau/coin-tracker/coingecko"
 )
 
 type Config struct {
-	TopCoinLimit     int
 	InvestmentAmount float64
-	Holdings         map[string]float64
-	UseBinancePrice  []string
+	Holdings         []Holding
+}
+
+type Holding struct {
+	Name string
+	ExchangeId string
+	Units float64
 }
 
 func main() {
@@ -27,131 +31,88 @@ func main() {
 		cointracker.LogFatal(err.Error())
 	}
 
-	portfolio := conf.Holdings
+	holdings := conf.Holdings
 
-	if conf.TopCoinLimit <= 0 {
-		conf.TopCoinLimit = 100
+	exchangeIds := make([]string, len(holdings))
+
+	for i, holding := range holdings {
+		exchangeIds[i] = holding.ExchangeId
 	}
 
-	allCoins, err := cointracker.GetTopCoinsData("cad", conf.TopCoinLimit)
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
 
-	if len(allCoins) == 0 {
+	if len(coinMap) == 0 {
 		cointracker.LogFatal("Coin data is unavailable")
-	}
-
-	coins := cointracker.FilterCoins(allCoins, func(c cointracker.Coin) bool {
-		_, ok := portfolio[c.Symbol]
-		return ok
-	})
-
-	if len(conf.UseBinancePrice) > 0 {
-		marketPriceMap, _ := binance.GetMarketPricesMap()
-
-		for _, symbol := range conf.UseBinancePrice {
-			if symbol == "BTC" {
-				continue
-			}
-
-			// Sometimes price is skewed by foreign exchanges, use binance price to get a more accurate value
-			marketPrice, ok := marketPriceMap[symbol + "BTC"]
-
-			if !ok {
-				continue
-			}
-
-			for i := range coins {
-				if coins[i].Symbol == symbol {
-					// use reference to overwrite value
-					coin := &coins[i]
-
-					BTCUSDRate := coin.PriceUSD / coin.PriceBTC
-					USDCADRate := coin.PriceCAD / coin.PriceUSD
-
-					coin.PriceBTC = marketPrice
-					coin.PriceUSD = coin.PriceBTC * BTCUSDRate
-					coin.PriceCAD = coin.PriceUSD * USDCADRate
-
-					break
-				}
-			}
-		}
 	}
 
 	var totalCAD float64 = 0
 	var totalUSD float64 = 0
+	var totalEUR float64 = 0
 	var totalBTC float64 = 0
 	var totalETH float64 = 0
-	var ETHBTCPrice float64 = 0
 	var ChangeCAD24hAgo float64 = 0
 
-	ETH := cointracker.FindCoin("ETH", allCoins)
+	for _, holding := range holdings {
+		coin, ok := coinMap[holding.ExchangeId]
 
-	if ETH != nil {
-		ETHBTCPrice = ETH.PriceBTC
+		if !ok {
+			continue
+		}
+
+		totalCAD += holding.Units * coin.PriceCAD
+		totalUSD += holding.Units * coin.PriceUSD
+		totalEUR += holding.Units * coin.PriceEUR
+		totalBTC += holding.Units * coin.PriceBTC
+		totalETH += holding.Units * coin.PriceETH
+
+		ChangeCAD24hAgo += holding.Units * coin.PriceCAD * (coin.PercentChange24hCAD / 100)
 	}
 
-	for _, coin := range coins {
-		numberOfCoins := float64(portfolio[coin.Symbol])
+	tableRows := make([][]string, len(holdings))
 
-		totalCAD += numberOfCoins * coin.PriceCAD
-		totalUSD += numberOfCoins * coin.PriceUSD
-		totalBTC += numberOfCoins * coin.PriceBTC
+	for i, holding := range holdings {
+		coin, ok := coinMap[holding.ExchangeId]
 
-		ChangeCAD24hAgo += numberOfCoins * coin.PriceCAD * (coin.PercentChange24h / 100)
-	}
+		if !ok {
+			continue
+		}
 
-	if ETHBTCPrice > 0 {
-		totalETH = totalBTC / ETHBTCPrice
-	}
-
-	tableRows := make([][]string, len(coins))
-
-	for i, coin := range coins {
-		numberOfCoins := float64(portfolio[coin.Symbol])
-
-		priceCAD := numberOfCoins * coin.PriceCAD
-		priceUSD := numberOfCoins * coin.PriceUSD
-		priceBTC := numberOfCoins * coin.PriceBTC
+		priceCAD := holding.Units * coin.PriceCAD
+		priceUSD := holding.Units * coin.PriceUSD
+		priceBTC := holding.Units * coin.PriceBTC
+		priceETH := holding.Units * coin.PriceETH
 
 		var percentage float64 = 0
 
-		if totalUSD > 0 {
-			percentage = priceUSD / totalUSD * 100
-		}
-
-		var priceETH float64 = 0
-		var coinPriceETH float64 = 0
-
-		if ETHBTCPrice > 0 {
-			priceETH = priceBTC / ETHBTCPrice
-			coinPriceETH = coin.PriceBTC / ETHBTCPrice
+		if totalCAD > 0 {
+			percentage = priceCAD / totalCAD * 100
 		}
 
 		tableRows[i] = []string{
-			coin.Symbol,
+			holding.Name,
 			fmt.Sprintf("%.2f%%", percentage),
 			fmt.Sprintf("$%.4f", priceCAD),
 			fmt.Sprintf("$%.4f", coin.PriceCAD),
+			fmt.Sprintf("%.2f%%", coin.PercentChange24hCAD),
 			fmt.Sprintf("$%.4f", priceUSD),
 			fmt.Sprintf("$%.4f", coin.PriceUSD),
-			fmt.Sprintf("%d", coin.Rank),
-			fmt.Sprintf("%.2f%%", coin.PercentChange24h),
 			fmt.Sprintf("%.4f", priceETH),
-			fmt.Sprintf("%.8f", coinPriceETH),
+			fmt.Sprintf("%.8f", coin.PriceETH),
 			fmt.Sprintf("%.4f", priceBTC),
 			fmt.Sprintf("%.8f", coin.PriceBTC),
 		}
 	}
 
 	summaryTable := tablewriter.NewWriter(os.Stdout)
-	summaryTable.SetHeader([]string{"Return %", "CAD", "USD", "ETH", "BTC", "Return (CAD)", "24H (CAD)", "24H %"})
+	summaryTable.SetHeader([]string{"Return %", "CAD", "USD", "EUR", "ETH", "BTC", "Return (CAD)", "24H (CAD)", "24H %"})
 	summaryTable.Append([]string{
 		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
 		fmt.Sprintf("$%.2f", totalCAD),
 		fmt.Sprintf("$%.2f", totalUSD),
+		fmt.Sprintf("€%.2f", totalEUR),
 		fmt.Sprintf("%.4f", totalETH),
 		fmt.Sprintf("%.4f", totalBTC),
 		fmt.Sprintf("$%.2f", totalCAD - conf.InvestmentAmount),
@@ -161,7 +122,7 @@ func main() {
 	summaryTable.Render()
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "USD", "Price (USD)", "Rank", "24H %", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
+	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "24H % (CAD)", "USD", "Price (USD)", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
 
 	table.AppendBulk(tableRows)
 	table.Render()
