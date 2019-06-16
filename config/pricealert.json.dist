@@ -1,10 +1,17 @@
 {
   "coins": [
-    "ETH",
-    "XRP",
-    "BAT",
-    "OMG",
-    "ARK"
+    {
+      "name": "BTC",
+      "exchangeId": "bitcoin"
+    },
+    {
+      "name": "ETH",
+      "exchangeId": "ethereum"
+    },
+    {
+      "name": "XRP",
+      "exchangeId": "ripple"
+    }
   ],
   "sendEmail": true,
   "email": "my@email.com",

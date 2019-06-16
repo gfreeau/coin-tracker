@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
+	"github.com/gfreeau/coin-tracker/coingecko"
 	"gopkg.in/gomail.v2"
 	"io/ioutil"
 	"os"
@@ -11,7 +12,7 @@ import (
 )
 
 type Config struct {
-	Coins     []string
+	Coins     []Coin
 	SendEmail bool
 	Email     string
 	Smtp      struct {
@@ -20,7 +21,12 @@ type Config struct {
 		Username string
 		Password string
 	}
-	IncreasePercent  float64
+	IncreasePercent float64
+}
+
+type Coin struct {
+	Name       string
+	ExchangeId string
 }
 
 type PriceHistory map[string]float64
@@ -35,7 +41,7 @@ func main() {
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
 	priceHistoryFile := filepath.Dir(os.Args[1]) + "/coin-prices.json"
@@ -47,40 +53,41 @@ func main() {
 		priceHistory = make(PriceHistory, 0)
 	}
 
-	coins, err := cointracker.GetCoinData()
+	exchangeIds := make([]string, len(conf.Coins))
+
+	for i, c := range conf.Coins {
+		exchangeIds[i] = c.ExchangeId
+	}
+
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
 
-	if len(coins) == 0 {
+	if len(coinMap) == 0 {
 		cointracker.LogFatal("Coin data is unavailable")
 	}
-
-	for _, v := range conf.Coins {
-		if _, ok := priceHistory[v]; !ok {
-			priceHistory[v] = 0
-		}
-	}
-
-	coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-		_, ok := priceHistory[c.Symbol]
-		return ok
-	})
 
 	alert := false
 	output := ""
 
-	for _, coin := range coins {
-		alertPrice, ok := priceHistory[coin.Symbol]
+	for _, coin := range conf.Coins {
+		coinData, ok := coinMap[coin.ExchangeId]
 
 		if !ok {
 			continue
 		}
 
-		if coin.PriceCAD > alertPrice {
-			output += fmt.Sprintf("%s is now CAD %.4f, USD %.4f\n", coin.Name, coin.PriceCAD, coin.PriceUSD)
+		if _, ok := priceHistory[coin.ExchangeId]; !ok {
+			priceHistory[coin.ExchangeId] = 0
+		}
+
+		alertPrice := priceHistory[coin.ExchangeId]
+
+		if coinData.PriceCAD > alertPrice {
+			output += fmt.Sprintf("%s is now CAD %.4f, USD %.4f\n", coin.Name, coinData.PriceCAD, coinData.PriceUSD)
 			alert = true
-			priceHistory[coin.Symbol] = coin.PriceCAD + (coin.PriceCAD * (conf.IncreasePercent / 100))
+			priceHistory[coin.ExchangeId] = coinData.PriceCAD + (coinData.PriceCAD * (conf.IncreasePercent / 100))
 		}
 	}
 

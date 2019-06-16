@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
+	"github.com/gfreeau/coin-tracker/coingecko"
 	"gopkg.in/gomail.v2"
 	"math"
 	"os"
 )
 
 type Config struct {
-	Coins     []string
+	Coins     []Coin
 	SendEmail bool
 	Email     string
 	Smtp      struct {
@@ -19,6 +20,11 @@ type Config struct {
 		Password string
 	}
 	AlertPercent float64
+}
+
+type Coin struct {
+	Name       string
+	ExchangeId string
 }
 
 func main() {
@@ -31,37 +37,36 @@ func main() {
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
-	coins, err := cointracker.GetCoinData()
+	exchangeIds := make([]string, len(conf.Coins))
+
+	for i, c := range conf.Coins {
+		exchangeIds[i] = c.ExchangeId
+	}
+
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
 
-	if len(coins) == 0 {
+	if len(coinMap) == 0 {
 		cointracker.LogFatal("Coin data is unavailable")
-	}
-
-	{
-		set := make(map[string]bool, 0)
-
-		for _, v := range conf.Coins {
-			set[v] = true
-		}
-
-		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-			_, ok := set[c.Symbol]
-			return ok
-		})
 	}
 
 	alert := false
 	output := ""
 
-	for _, coin := range coins {
-		if math.Abs(coin.PercentChange24h) >= conf.AlertPercent {
-			output += fmt.Sprintf("%s (%.2f%%) is now CAD %.4f, USD %.4f\n", coin.Name, coin.PercentChange24h, coin.PriceCAD, coin.PriceUSD)
+	for _, coin := range conf.Coins {
+		coinData, ok := coinMap[coin.ExchangeId]
+
+		if !ok {
+			continue
+		}
+
+		if math.Abs(coinData.PercentChange24hCAD) >= conf.AlertPercent {
+			output += fmt.Sprintf("%s (%.2f%%) is now CAD %.4f, USD %.4f\n", coin.Name, coinData.PercentChange24hCAD, coinData.PriceCAD, coinData.PriceUSD)
 			alert = true
 		}
 	}
