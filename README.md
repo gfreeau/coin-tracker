@@ -1,4 +1,6 @@
-A WIP, working on some simple golang CLI tools for keeping tracking of cryptocurrencies.
+Some simple golang CLI tools for keeping tracking of cryptocurrencies.
+
+You will need the `ExchangeId` for each coin for the config files, you can get it from this API: https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=true. The field is called `id`
 
 Portfolio Balance
 -----------------

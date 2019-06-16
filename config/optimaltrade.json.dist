@@ -1,26 +1,26 @@
 {
   "trades": [
     {
-      "minorSymbol": "ETH",
-      "majorSymbol": "BTC",
-      "sellSymbol": "BTC",
+      "minorId": "ethereum",
+      "majorId": "bitcoin",
+      "sellId": "bitcoin",
       "sellUnits": 1,
-      "buySymbol": "ETH",
+      "buyId": "ethereum",
       "buyUnits": 30
     },
     {
-      "intermediarySymbol": "BTC",
-      "sellSymbol": "OMG",
+      "intermediaryId": "bitcoin",
+      "sellId": "omisego",
       "sellUnits": 100,
-      "buySymbol": "REQ",
+      "buyId": "request-network",
       "buyUnits": 5000
     },
     {
-      "minorSymbol": "OMG",
-      "majorSymbol": "BTC",
-      "sellSymbol": "BTC",
+      "minorId": "omisego",
+      "majorId": "bitcoin",
+      "sellId": "bitcoin",
       "sellUnits": 1,
-      "buySymbol": "OMG",
+      "buyId": "omisego",
       "buyUnits": 1000
     }
   ],
@@ -31,5 +31,5 @@
     "port": 587,
     "username": "",
     "password": ""
-  },
+  }
 }

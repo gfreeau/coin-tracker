@@ -2,7 +2,8 @@
   "alertMode": false,
   "purchases": [
     {
-      "symbol": "BTC",
+      "name": "BTC",
+      "exchangeId": "bitcoin",
       "buyUnits": 1,
       "price": 9000,
       "currency": "USD"

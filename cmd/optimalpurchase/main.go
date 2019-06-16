@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
-	"os"
+	"github.com/gfreeau/coin-tracker/coingecko"
 	"gopkg.in/gomail.v2"
+	"os"
 )
 
 type Config struct {
@@ -21,10 +22,11 @@ type Config struct {
 }
 
 type Purchase struct {
-	Symbol    string
-	BuyUnits  float64
-	Price float64
-	Currency string
+	Name       string
+	ExchangeId string
+	BuyUnits   float64
+	Price      float64
+	Currency   string
 }
 
 func main() {
@@ -36,56 +38,47 @@ func main() {
 	var conf Config
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
-	coins, err := cointracker.GetCoinData()
+	exchangeIds := make([]string, len(conf.Purchases))
+
+	for i, p := range conf.Purchases {
+		exchangeIds[i] = p.ExchangeId
+	}
+
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
 
-	if len(coins) == 0 {
+	if len(coinMap) == 0 {
 		cointracker.LogFatal("Coin data is unavailable")
 	}
-
-	{
-		set := make(map[string]bool, 0)
-
-		for _, p := range conf.Purchases {
-			set[p.Symbol] = true
-		}
-
-		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-			_, ok := set[c.Symbol]
-			return ok
-		})
-	}
-
-	coinMap := cointracker.GetCoinMap(coins)
 
 	alert := false
 	output := ""
 
 	for _, purchase := range conf.Purchases {
-		coin, ok := coinMap[purchase.Symbol]
+		coinData, ok := coinMap[purchase.ExchangeId]
 
 		if !ok {
 			continue
 		}
 
-		currentUnitPrice := coin.PriceUSD
-		currentPurchasePrice := purchase.BuyUnits * coin.PriceUSD
+		currentUnitPrice := coinData.PriceUSD
+		currentPurchasePrice := purchase.BuyUnits * coinData.PriceUSD
 
 		if purchase.Currency == "CAD" {
-			currentUnitPrice = coin.PriceCAD
-			currentPurchasePrice = purchase.BuyUnits * coin.PriceCAD
+			currentUnitPrice = coinData.PriceCAD
+			currentPurchasePrice = purchase.BuyUnits * coinData.PriceCAD
 		}
 
 		if !conf.AlertMode || currentPurchasePrice <= purchase.Price {
 			targetPrice := purchase.Price / purchase.BuyUnits
 			targetDiff := cointracker.PercentDiff(currentPurchasePrice, purchase.Price)
 
-			output += fmt.Sprintf("%s: %.2f = %.2f %s\n", purchase.Symbol, purchase.BuyUnits, currentPurchasePrice, purchase.Currency)
+			output += fmt.Sprintf("%s: %.2f = %.2f %s\n", purchase.Name, purchase.BuyUnits, currentPurchasePrice, purchase.Currency)
 			output += fmt.Sprintf("Target: %.2f %s (%.2f%%)\n", purchase.Price, purchase.Currency, targetDiff)
 			output += fmt.Sprintf("Current Unit Price: %.4f %s\n", currentUnitPrice, purchase.Currency)
 			output += fmt.Sprintf("Target Unit Price: %.4f %s\n\n", targetPrice, purchase.Currency)

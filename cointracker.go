@@ -20,10 +20,6 @@ type Coin struct {
 
 type CoinList []Coin
 
-func GetCoinData() (CoinList, error) {
-	return GetTopCoinsData("CAD", 200)
-}
-
 func GetTopCoinsData(currency string, limit int) (CoinList, error) {
 	var coins CoinList
 

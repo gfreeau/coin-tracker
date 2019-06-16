@@ -1,16 +1,16 @@
 package binance
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 )
 
 type MarketMap map[string]float64
 
 type Market struct {
-	 Symbol string
-	 Price float64 `json:"price,string"`
+	Symbol string
+	Price  float64 `json:"price,string"`
 }
 
 type Markets []Market

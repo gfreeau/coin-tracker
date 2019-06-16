@@ -5,6 +5,7 @@ import (
 	"github.com/gfreeau/coin-tracker"
 	"os"
 
+	"github.com/gfreeau/coin-tracker/coingecko"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -13,7 +14,8 @@ type Config struct {
 }
 
 type Purchase struct {
-	Symbol         string
+	Name           string
+	ExchangeId     string
 	CurrencyAmount float64
 	UnitAmount     float64
 	Currency       string
@@ -28,37 +30,28 @@ func main() {
 	var conf Config
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
-	coins, err := cointracker.GetCoinData()
+	exchangeIds := make([]string, len(conf.Purchases))
+
+	for i, p := range conf.Purchases {
+		exchangeIds[i] = p.ExchangeId
+	}
+
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
 	if err != nil {
 		cointracker.LogFatal(err.Error())
 	}
 
-	if len(coins) == 0 {
+	if len(coinMap) == 0 {
 		cointracker.LogFatal("Coin data is unavailable")
 	}
-
-	{
-		set := make(map[string]bool, 0)
-
-		for _, p := range conf.Purchases {
-			set[p.Symbol] = true
-		}
-
-		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-			_, ok := set[c.Symbol]
-			return ok
-		})
-	}
-
-	coinMap := cointracker.GetCoinMap(coins)
 
 	tableRows := make([][]string, len(conf.Purchases))
 
 	for i, purchase := range conf.Purchases {
-		coin, ok := coinMap[purchase.Symbol]
+		coinData, ok := coinMap[purchase.ExchangeId]
 
 		if !ok {
 			continue
@@ -66,9 +59,14 @@ func main() {
 
 		units := purchase.UnitAmount
 		currencyAmount := purchase.CurrencyAmount
-		coinPrice := coin.PriceUSD
+		currencySymbol := "$"
+		coinPrice := coinData.PriceUSD
+
 		if purchase.Currency == "CAD" {
-			coinPrice = coin.PriceCAD
+			coinPrice = coinData.PriceCAD
+		} else if purchase.Currency == "EUR" {
+			currencySymbol = "€"
+			coinPrice = coinData.PriceEUR
 		}
 
 		if units > 0 {
@@ -79,14 +77,14 @@ func main() {
 
 		tableRows[i] = []string{
 			purchase.Currency,
-			fmt.Sprintf("$%.2f", currencyAmount),
-			coin.Symbol,
+			fmt.Sprintf("%s%.2f", currencySymbol, currencyAmount),
+			purchase.Name,
 			fmt.Sprintf("%.4f", units),
 		}
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Currency", "CurrencyAmount", "Symbol", "Units"})
+	table.SetHeader([]string{"Currency", "Currency Amount", "Symbol", "Units"})
 
 	table.AppendBulk(tableRows)
 	table.Render()

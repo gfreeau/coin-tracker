@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
-	"github.com/gfreeau/coin-tracker/binance"
+	"github.com/gfreeau/coin-tracker/coingecko"
 	"github.com/olekukonko/tablewriter"
 	"gopkg.in/gomail.v2"
 	"os"
@@ -24,13 +24,12 @@ type Config struct {
 }
 
 type Trade struct {
-	IntermediarySymbol string
-	MajorSymbol        string
-	MinorSymbol        string
-	SellSymbol         string
-	SellUnits          float64
-	BuySymbol          string
-	BuyUnits           float64
+	SellName  string
+	SellId    string
+	SellUnits float64
+	BuyName   string
+	BuyId     string
+	BuyUnits  float64
 }
 
 func main() {
@@ -42,74 +41,50 @@ func main() {
 	var conf Config
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
-	priceMap, err := binance.GetMarketPricesMap()
-
-	if err != nil {
-		cointracker.LogFatal(err.Error())
-	}
-
-	coins, err := cointracker.GetCoinData()
-	if err != nil {
-		cointracker.LogFatal(err.Error())
-	}
-
-	if len(coins) == 0 {
-		cointracker.LogFatal("Coin data is unavailable")
-	}
+	exchangeIds := make([]string, 0)
 
 	{
 		set := make(map[string]bool, 0)
 
-		for _, t := range conf.Trades {
-			set[t.SellSymbol] = true
-			set[t.BuySymbol] = true
+		for _, p := range conf.Trades {
+			set[p.SellId] = true
+			set[p.BuyId] = true
 		}
 
-		coins = cointracker.FilterCoins(coins, func(c cointracker.Coin) bool {
-			_, ok := set[c.Symbol]
-			return ok
-		})
+		for k := range set {
+			exchangeIds = append(exchangeIds, k)
+		}
 	}
 
-	coinMap := cointracker.GetCoinMap(coins)
+	coinMap, err := coingecko.GetCoinMap(exchangeIds)
+	if err != nil {
+		cointracker.LogFatal(err.Error())
+	}
+
+	if len(coinMap) == 0 {
+		cointracker.LogFatal("Coin data is unavailable")
+	}
 
 	alert := false
 	tableRows := make([][]string, 0)
 
 	for _, trade := range conf.Trades {
-		var price float64 = 0
-
-		sellCoin, exists := coinMap[trade.SellSymbol]
+		sellCoin, exists := coinMap[trade.SellId]
 
 		if !exists {
 			continue
 		}
 
-		buyCoin, exists := coinMap[trade.BuySymbol]
+		buyCoin, exists := coinMap[trade.BuyId]
 
 		if !exists {
 			continue
 		}
 
-		if len(trade.IntermediarySymbol) > 0 {
-			sellMarket := trade.BuySymbol + trade.IntermediarySymbol
-			sellMarketPrice := priceMap[sellMarket]
-
-			buyMarket := trade.SellSymbol + trade.IntermediarySymbol
-			buyMarketPrice := priceMap[buyMarket]
-
-			if buyMarketPrice <= 0 {
-				continue
-			}
-
-			price = sellMarketPrice / buyMarketPrice
-		} else {
-			market := trade.MinorSymbol + trade.MajorSymbol
-			price = priceMap[market]
-		}
+		price := sellCoin.PriceBTC / buyCoin.PriceBTC
 
 		if price <= 0 {
 			continue
@@ -121,34 +96,25 @@ func main() {
 
 		var currentBuy, targetSellPrice, targetBuyPrice, diff, targetSellPriceUSD, targetBuyPriceUSD, currentBuyPriceUSD float64
 
-		if trade.SellSymbol == trade.MinorSymbol {
-			currentBuy = trade.SellUnits * price
-			targetSellPrice = trade.SellUnits / trade.BuyUnits
-			targetBuyPrice = trade.BuyUnits / trade.SellUnits
-			targetSellPriceUSD = buyCoin.PriceUSD / targetSellPrice
-			targetBuyPriceUSD = sellCoin.PriceUSD / targetBuyPrice
-			currentBuyPriceUSD = sellCoin.PriceUSD / price
-		} else {
-			currentBuy = trade.SellUnits / price
-			targetSellPrice = trade.BuyUnits / trade.SellUnits
-			targetBuyPrice = trade.SellUnits / trade.BuyUnits
-			targetSellPriceUSD = targetSellPrice * buyCoin.PriceUSD
-			targetBuyPriceUSD = targetBuyPrice * sellCoin.PriceUSD
-			currentBuyPriceUSD = price * sellCoin.PriceUSD
-		}
+		currentBuy = trade.SellUnits * price
+		targetSellPrice = trade.SellUnits / trade.BuyUnits
+		targetBuyPrice = trade.BuyUnits / trade.SellUnits
+		targetSellPriceUSD = buyCoin.PriceUSD / targetSellPrice
+		targetBuyPriceUSD = sellCoin.PriceUSD / targetBuyPrice
+		currentBuyPriceUSD = sellCoin.PriceUSD / price
 
 		diff = cointracker.PercentDiff(targetBuyPrice, price)
 
 		if !conf.AlertMode || currentBuy >= trade.BuyUnits {
 			tableRows = append(tableRows, []string{
-				fmt.Sprintf("%.2f %s", trade.SellUnits, trade.SellSymbol),
-				fmt.Sprintf("%.2f %s", trade.BuyUnits, trade.BuySymbol),
-				fmt.Sprintf("%.8f %s", currentBuy, trade.BuySymbol),
+				fmt.Sprintf("%.2f %s", trade.SellUnits, trade.SellName),
+				fmt.Sprintf("%.2f %s", trade.BuyUnits, trade.BuyName),
+				fmt.Sprintf("%.8f %s", currentBuy, trade.BuyName),
 				fmt.Sprintf("%.2f%%", diff),
-				fmt.Sprintf("%s: %.4f USD", trade.SellSymbol, sellCoin.PriceUSD),
-				fmt.Sprintf("%s: %.4f USD", trade.SellSymbol, targetSellPriceUSD),
-				fmt.Sprintf("%s: %.4f USD", trade.BuySymbol, currentBuyPriceUSD),
-				fmt.Sprintf("%s: %.4f USD", trade.BuySymbol, targetBuyPriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.SellName, sellCoin.PriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.SellName, targetSellPriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.BuyName, currentBuyPriceUSD),
+				fmt.Sprintf("%s: %.4f USD", trade.BuyName, targetBuyPriceUSD),
 			})
 
 			if conf.AlertMode {
