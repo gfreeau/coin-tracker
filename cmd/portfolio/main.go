@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gfreeau/coin-tracker"
-	"os"
-	"github.com/olekukonko/tablewriter"
 	"github.com/gfreeau/coin-tracker/coingecko"
+	"github.com/olekukonko/tablewriter"
+	"os"
 )
 
 type Config struct {
@@ -14,9 +14,9 @@ type Config struct {
 }
 
 type Holding struct {
-	Name string
+	Name       string
 	ExchangeId string
-	Units float64
+	Units      float64
 }
 
 func main() {
@@ -28,7 +28,7 @@ func main() {
 	var conf Config
 	err := cointracker.ParseJsonFile(os.Args[1], &conf)
 	if err != nil {
-		cointracker.LogFatal(err.Error())
+		cointracker.LogFatal("config file error: " + err.Error())
 	}
 
 	holdings := conf.Holdings
@@ -115,9 +115,9 @@ func main() {
 		fmt.Sprintf("€%.2f", totalEUR),
 		fmt.Sprintf("%.4f", totalETH),
 		fmt.Sprintf("%.4f", totalBTC),
-		fmt.Sprintf("$%.2f", totalCAD - conf.InvestmentAmount),
+		fmt.Sprintf("$%.2f", totalCAD-conf.InvestmentAmount),
 		fmt.Sprintf("$%.2f", ChangeCAD24hAgo),
-		fmt.Sprintf("%.2f%%", ChangeCAD24hAgo / (totalCAD - ChangeCAD24hAgo) * 100),
+		fmt.Sprintf("%.2f%%", ChangeCAD24hAgo/(totalCAD-ChangeCAD24hAgo)*100),
 	})
 	summaryTable.Render()
 
