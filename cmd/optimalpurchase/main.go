@@ -6,6 +6,8 @@ import (
 	"github.com/gfreeau/coin-tracker/coingecko"
 	"gopkg.in/gomail.v2"
 	"os"
+	"bytes"
+	"github.com/olekukonko/tablewriter"
 )
 
 type Config struct {
@@ -57,7 +59,7 @@ func main() {
 	}
 
 	alert := false
-	output := ""
+	tableRows := make([][]string, 0)
 
 	for _, purchase := range conf.Purchases {
 		coinData, ok := coinMap[purchase.ExchangeId]
@@ -78,10 +80,14 @@ func main() {
 			targetPrice := purchase.Price / purchase.BuyUnits
 			targetDiff := cointracker.PercentDiff(currentPurchasePrice, purchase.Price)
 
-			output += fmt.Sprintf("%s: %.2f = %.2f %s\n", purchase.Name, purchase.BuyUnits, currentPurchasePrice, purchase.Currency)
-			output += fmt.Sprintf("Target: %.2f %s (%.2f%%)\n", purchase.Price, purchase.Currency, targetDiff)
-			output += fmt.Sprintf("Current Unit Price: %.4f %s\n", currentUnitPrice, purchase.Currency)
-			output += fmt.Sprintf("Target Unit Price: %.4f %s\n\n", targetPrice, purchase.Currency)
+			tableRows = append(tableRows, []string{
+				fmt.Sprintf("%.2f %s", purchase.BuyUnits, purchase.Name),
+				fmt.Sprintf("%.2f %s", currentPurchasePrice, purchase.Currency),
+				fmt.Sprintf("%.2f %s", purchase.Price, purchase.Currency),
+				fmt.Sprintf("%.4f %s", targetPrice, purchase.Currency),
+				fmt.Sprintf("%.4f %s", currentUnitPrice, purchase.Currency),
+				fmt.Sprintf("%.2f%%", targetDiff),
+			})
 
 			if conf.AlertMode {
 				alert = true
@@ -89,7 +95,15 @@ func main() {
 		}
 	}
 
-	fmt.Print(output)
+	buf := new(bytes.Buffer)
+
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader([]string{"Buy", "Current Buy Price", "Target Buy Price", "Target Unit Price", "Current Unit Price", "Target Diff"})
+
+	table.AppendBulk(tableRows)
+	table.Render()
+
+	fmt.Print(buf)
 
 	if alert {
 		if conf.SendEmail {
@@ -97,7 +111,7 @@ func main() {
 			m.SetHeader("To", conf.Email)
 			m.SetHeader("From", conf.Email)
 			m.SetHeader("Subject", "Optimal Purchase Alert")
-			m.SetBody("text/plain", output)
+			m.SetBody("text/plain", buf.String())
 
 			d := gomail.NewDialer(conf.Smtp.Host, conf.Smtp.Port, conf.Smtp.Username, conf.Smtp.Password)
 
