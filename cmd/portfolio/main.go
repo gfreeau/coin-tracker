@@ -99,6 +99,7 @@ func main() {
 			fmt.Sprintf("%.2f%%", coin.PercentChange24hCAD),
 			fmt.Sprintf("$%.4f", priceUSD),
 			fmt.Sprintf("$%.4f", coin.PriceUSD),
+			fmt.Sprintf("€%.4f", coin.PriceEUR),
 			fmt.Sprintf("%.4f", priceETH),
 			fmt.Sprintf("%.8f", coin.PriceETH),
 			fmt.Sprintf("%.4f", priceBTC),
@@ -122,7 +123,7 @@ func main() {
 	summaryTable.Render()
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "24H % (CAD)", "USD", "Price (USD)", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
+	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "24H % (CAD)", "USD", "Price (USD)", "Price (EUR)", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
 
 	table.AppendBulk(tableRows)
 	table.Render()
