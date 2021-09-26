@@ -1,5 +1,16 @@
 Some simple golang CLI tools for keeping tracking of cryptocurrencies.
 
+This code predates modules and other ways of organizing dependencies so you'll need to run the following to build this code:
+
+```
+go env -w GO111MODULE=off
+go get github.com/gfreeau/coin-tracker
+go get gopkg.in/gomail.v2 
+go get github.com/olekukonko/tablewriter 
+```
+
+Then change into the directory set for `$GOPATH`, run `go env` to determine what it is by default. Then navigate to `src/github.com/gfreeau/coin-tracker`.
+
 You will need the `ExchangeId` for each coin for the config files, you can get it from this API: https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=true. The field is called `id`
 
 Portfolio Balance
