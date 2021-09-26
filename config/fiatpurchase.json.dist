@@ -3,13 +3,13 @@
     {
       "name": "BTC",
       "exchangeId": "bitcoin",
-      "amount": 10000,
+      "currencyAmount": 10000,
       "currency": "CAD"
     },
     {
       "name": "ETH",
       "exchangeId": "ethereum",
-      "amount": 10000,
+      "currencyAmount": 10000,
       "currency": "CAD"
     }
   ]

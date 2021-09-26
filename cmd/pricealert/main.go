@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gfreeau/coin-tracker"
-	"github.com/gfreeau/coin-tracker/coingecko"
-	"gopkg.in/gomail.v2"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	cointracker "github.com/gfreeau/coin-tracker"
+	"github.com/gfreeau/coin-tracker/coingecko"
+	"gopkg.in/gomail.v2"
 )
 
 type Config struct {
@@ -84,10 +85,10 @@ func main() {
 
 		alertPrice := priceHistory[coin.ExchangeId]
 
-		if coinData.PriceCAD > alertPrice {
-			output += fmt.Sprintf("%s is now CAD %.4f, USD %.4f\n", coin.Name, coinData.PriceCAD, coinData.PriceUSD)
+		if coinData.PriceAUD > alertPrice {
+			output += fmt.Sprintf("%s is now AUD %.4f, USD %.4f\n", coin.Name, coinData.PriceAUD, coinData.PriceUSD)
 			alert = true
-			priceHistory[coin.ExchangeId] = coinData.PriceCAD + (coinData.PriceCAD * (conf.IncreasePercent / 100))
+			priceHistory[coin.ExchangeId] = coinData.PriceAUD + (coinData.PriceAUD * (conf.IncreasePercent / 100))
 		}
 	}
 

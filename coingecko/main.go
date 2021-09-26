@@ -12,6 +12,8 @@ import (
 type Coin struct {
 	PriceUSD            float64 `json:"usd"`
 	PercentChange24hUSD float64 `json:"usd_24h_change"`
+	PriceAUD            float64 `json:"aud"`
+	PercentChange24hAUD float64 `json:"aud_24h_change"`
 	PriceCAD            float64 `json:"cad"`
 	PercentChange24hCAD float64 `json:"cad_24h_change"`
 	PriceEUR            float64 `json:"eur"`
@@ -24,7 +26,7 @@ type Coin struct {
 
 type CoinMap map[string]Coin
 
-var currencies = []string{"usd", "cad", "eur", "btc", "eth"}
+var currencies = []string{"usd", "aud", "cad", "eur", "btc", "eth"}
 
 func GetCoinMap(exchangeIds []string) (CoinMap, error) {
 	var coins CoinMap

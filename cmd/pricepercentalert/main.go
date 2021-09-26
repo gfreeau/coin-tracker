@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/gfreeau/coin-tracker"
-	"github.com/gfreeau/coin-tracker/coingecko"
-	"gopkg.in/gomail.v2"
 	"math"
 	"os"
+
+	cointracker "github.com/gfreeau/coin-tracker"
+	"github.com/gfreeau/coin-tracker/coingecko"
+	"gopkg.in/gomail.v2"
 )
 
 type Config struct {
@@ -65,8 +66,8 @@ func main() {
 			continue
 		}
 
-		if math.Abs(coinData.PercentChange24hCAD) >= conf.AlertPercent {
-			output += fmt.Sprintf("%s (%.2f%%) is now CAD %.4f, USD %.4f\n", coin.Name, coinData.PercentChange24hCAD, coinData.PriceCAD, coinData.PriceUSD)
+		if math.Abs(coinData.PercentChange24hAUD) >= conf.AlertPercent {
+			output += fmt.Sprintf("%s (%.2f%%) is now AUD %.4f, USD %.4f\n", coin.Name, coinData.PercentChange24hAUD, coinData.PriceAUD, coinData.PriceUSD)
 			alert = true
 		}
 	}

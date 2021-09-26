@@ -1,4 +1,4 @@
-Some simple golang CLI tools for keeping tracking of cryptocurrencies.
+Some simple golang CLI tools for keeping tracking of cryptocurrencies. Mainly for my own purposes so not as customizable as it could be.
 
 This code predates modules and other ways of organizing dependencies so you'll need to run the following to build this code:
 
@@ -25,6 +25,19 @@ Create a json config file based on `portfolio.json.dist`.
 In the config file list the coin symbols and the amount of coins in a json object.
 
 This command will show the total balance in USD and CAD and the value of each coin.
+
+Fiat Purchase
+-----------------
+
+```
+go build -o ./bin/fiatpurchase cmd/fiatpurchase/main.go
+./bin/fiatpurchase ./config/fiatpurchase.json
+```
+
+Create a json config file based on `fiatpurchase.json.dist`.
+In the config file list the coin symbols and the amount of coins in a json object.
+
+This command will show the amount of coins you can purchase right now based on the amount of currency you have or the units you want to buy.
 
 
 Price Alert

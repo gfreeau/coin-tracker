@@ -71,9 +71,16 @@ func main() {
 		currentUnitPrice := coinData.PriceUSD
 		currentPurchasePrice := purchase.BuyUnits * coinData.PriceUSD
 
-		if purchase.Currency == "CAD" {
+		switch purchase.Currency {
+		case "AUD":
+			currentUnitPrice = coinData.PriceAUD
+			currentPurchasePrice = purchase.BuyUnits * coinData.PriceAUD
+		case "CAD":
 			currentUnitPrice = coinData.PriceCAD
 			currentPurchasePrice = purchase.BuyUnits * coinData.PriceCAD
+		case "EUR":
+			currentUnitPrice = coinData.PriceEUR
+			currentPurchasePrice = purchase.BuyUnits * coinData.PriceEUR
 		}
 
 		if !conf.AlertMode || currentPurchasePrice <= purchase.Price {
@@ -94,6 +101,10 @@ func main() {
 			}
 		}
 	}
+
+	if len(tableRows) == 0 {
+                os.Exit(0)
+        }
 
 	buf := new(bytes.Buffer)
 

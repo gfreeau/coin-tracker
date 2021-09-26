@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/gfreeau/coin-tracker"
 	"os"
+
+	cointracker "github.com/gfreeau/coin-tracker"
 
 	"github.com/gfreeau/coin-tracker/coingecko"
 	"github.com/olekukonko/tablewriter"
@@ -62,9 +63,12 @@ func main() {
 		currencySymbol := "$"
 		coinPrice := coinData.PriceUSD
 
-		if purchase.Currency == "CAD" {
+		switch purchase.Currency {
+		case "AUD":
+			coinPrice = coinData.PriceAUD
+		case "CAD":
 			coinPrice = coinData.PriceCAD
-		} else if purchase.Currency == "EUR" {
+		case "EUR":
 			currencySymbol = "€"
 			coinPrice = coinData.PriceEUR
 		}

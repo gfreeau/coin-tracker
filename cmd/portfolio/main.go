@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/gfreeau/coin-tracker"
+	"os"
+
+	cointracker "github.com/gfreeau/coin-tracker"
 	"github.com/gfreeau/coin-tracker/coingecko"
 	"github.com/olekukonko/tablewriter"
-	"os"
 )
 
 type Config struct {
@@ -48,12 +49,13 @@ func main() {
 		cointracker.LogFatal("Coin data is unavailable")
 	}
 
+	var totalAUD float64 = 0
 	var totalCAD float64 = 0
 	var totalUSD float64 = 0
 	var totalEUR float64 = 0
 	var totalBTC float64 = 0
 	var totalETH float64 = 0
-	var ChangeCAD24hAgo float64 = 0
+	var ChangeAUD24hAgo float64 = 0
 
 	for _, holding := range holdings {
 		coin, ok := coinMap[holding.ExchangeId]
@@ -62,13 +64,14 @@ func main() {
 			continue
 		}
 
+		totalAUD += holding.Units * coin.PriceAUD
 		totalCAD += holding.Units * coin.PriceCAD
 		totalUSD += holding.Units * coin.PriceUSD
 		totalEUR += holding.Units * coin.PriceEUR
 		totalBTC += holding.Units * coin.PriceBTC
 		totalETH += holding.Units * coin.PriceETH
 
-		ChangeCAD24hAgo += holding.Units * coin.PriceCAD * (coin.PercentChange24hCAD / 100)
+		ChangeAUD24hAgo += holding.Units * coin.PriceAUD * (coin.PercentChange24hAUD / 100)
 	}
 
 	tableRows := make([][]string, len(holdings))
@@ -80,6 +83,7 @@ func main() {
 			continue
 		}
 
+		priceAUD := holding.Units * coin.PriceAUD
 		priceCAD := holding.Units * coin.PriceCAD
 		priceUSD := holding.Units * coin.PriceUSD
 		priceBTC := holding.Units * coin.PriceBTC
@@ -87,19 +91,20 @@ func main() {
 
 		var percentage float64 = 0
 
-		if totalCAD > 0 {
-			percentage = priceCAD / totalCAD * 100
+		if totalAUD > 0 {
+			percentage = priceAUD / totalAUD * 100
 		}
 
 		tableRows[i] = []string{
 			holding.Name,
 			fmt.Sprintf("%.2f%%", percentage),
+			fmt.Sprintf("$%.4f", priceAUD),
+			fmt.Sprintf("$%.4f", coin.PriceAUD),
+			fmt.Sprintf("%.2f%%", coin.PercentChange24hAUD),
 			fmt.Sprintf("$%.4f", priceCAD),
 			fmt.Sprintf("$%.4f", coin.PriceCAD),
-			fmt.Sprintf("%.2f%%", coin.PercentChange24hCAD),
 			fmt.Sprintf("$%.4f", priceUSD),
 			fmt.Sprintf("$%.4f", coin.PriceUSD),
-			fmt.Sprintf("€%.4f", coin.PriceEUR),
 			fmt.Sprintf("%.4f", priceETH),
 			fmt.Sprintf("%.8f", coin.PriceETH),
 			fmt.Sprintf("%.4f", priceBTC),
@@ -108,22 +113,22 @@ func main() {
 	}
 
 	summaryTable := tablewriter.NewWriter(os.Stdout)
-	summaryTable.SetHeader([]string{"Return %", "CAD", "USD", "EUR", "ETH", "BTC", "Return (CAD)", "24H (CAD)", "24H %"})
+	summaryTable.SetHeader([]string{"Return %", "AUD", "CAD", "USD", "ETH", "BTC", "Return (AUD)", "24H (AUD)", "24H %"})
 	summaryTable.Append([]string{
-		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalCAD)),
+		fmt.Sprintf("%.2f%%", cointracker.PercentDiff(conf.InvestmentAmount, totalAUD)),
+		fmt.Sprintf("$%.2f", totalAUD),
 		fmt.Sprintf("$%.2f", totalCAD),
 		fmt.Sprintf("$%.2f", totalUSD),
-		fmt.Sprintf("€%.2f", totalEUR),
 		fmt.Sprintf("%.4f", totalETH),
 		fmt.Sprintf("%.4f", totalBTC),
-		fmt.Sprintf("$%.2f", totalCAD-conf.InvestmentAmount),
-		fmt.Sprintf("$%.2f", ChangeCAD24hAgo),
-		fmt.Sprintf("%.2f%%", ChangeCAD24hAgo/(totalCAD-ChangeCAD24hAgo)*100),
+		fmt.Sprintf("$%.2f", totalAUD-conf.InvestmentAmount),
+		fmt.Sprintf("$%.2f", ChangeAUD24hAgo),
+		fmt.Sprintf("%.2f%%", ChangeAUD24hAgo/(totalAUD-ChangeAUD24hAgo)*100),
 	})
 	summaryTable.Render()
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Alloc", "CAD", "Price (CAD)", "24H % (CAD)", "USD", "Price (USD)", "Price (EUR)", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
+	table.SetHeader([]string{"Name", "Alloc", "AUD", "Price (AUD)", "24H % (AUD)", "CAD", "Price (CAD)", "USD", "Price (USD)", "ETH", "Price (ETH)", "BTC", "Price (BTC)"})
 
 	table.AppendBulk(tableRows)
 	table.Render()
