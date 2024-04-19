@@ -1,3 +1,10 @@
+New Repository
+--------------
+
+This repository is no longer updated. There is a newer version of this code written in Python with a few more features here: https://github.com/gfreeau/crypto-coin-tracker
+
+---
+
 Some simple golang CLI tools for keeping tracking of cryptocurrencies. Mainly for my own purposes so not as customizable as it could be.
 
 This code predates modules and other ways of organizing dependencies so you'll need to run the following to build this code:
